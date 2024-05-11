@@ -1,25 +1,50 @@
 from datetime import date, timedelta
+from src.domain.models import Batch, OrderLine, allocate
 import pytest
 
 today = date.today()
 tomorrow = today + timedelta(days=1)
 later = tomorrow + timedelta(days=10)
 
+def make_batch_and_line(sku, batch_qty, line_qty):
+    return(
+        Batch("batch-001", sku, batch_qty, eta=date.today()),
+        OrderLine("order-123", sku, line_qty)
+    )
 
 def test_allocating_to_a_batch_reduces_the_available_quantity():
-    pytest.fail("TODO")
+    batch, line = make_batch_and_line("SMALL-TABLE", 20, 2)
+    batch.allocate(line)
+    assert batch.available_quantity == 18
+
 
 def test_can_allocate_if_available_greater_than_required():
-    pytest.fail("TODO")
+    batch, line = make_batch_and_line("SMALL-TABLE", 20, 2)
+    assert batch.can_allocate(line)
 
 def test_cannot_allocate_if_availabel_smaller_than_required():
-    pytest.fail("TODO")
+    batch, line = make_batch_and_line("SMALL-TABLE", 20, 22)
+    assert batch.can_allocate(line) is False
+
 
 def test_can_allocate_if_available_equal_to_required():
-    pytest.fail("TODO")
+    batch, line = make_batch_and_line("SMALL-TABLE", 2, 2)
+    assert batch.can_allocate(line)
 
-def test_prefers_warehouse_batches_to_shipment():
-    pytest.fail("TODO")
+def test_cannot_allocate_if_sku_do_not_match():
+    batch = Batch("batch-001", "TESTABLE-CHAIR", 100, eta=None)
+    line  = OrderLine("order-001", "EXPENSIVE-CHAIR", 10)
+    batch.can_allocate(line) is False
+
+def test_prefers_current_stock_batches_to_shipment():
+    in_stock_batch = Batch("in-stock-batch", "RETRO-CLOCK", 100, eta=None)
+    shipment_batch = Batch("shipment-batch", "RETRO-CLOCK", 100, eta=tomorrow)
+    line = OrderLine("order-001", "RETRO-CLOCK", 10)
+
+    allocate(line, [in_stock_batch, shipment_batch])
+
+    assert in_stock_batch.available_quantity == 90
+    assert shipment_batch.available_quantity == 100 
 
 def test_prefers_earlier_batches():
     pytest.fail("TODO")
