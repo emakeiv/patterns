@@ -4,7 +4,7 @@ install:
 		pip install -r requirements.txt
 format:
 	# format code
-	black test/*.py src/*.py
+	black tests/*.py src/*/*.py
 lint:
 	# code linting 
 	pylint --disable=R,C src/*.py test/*.py
