@@ -7,7 +7,7 @@ format:
 	black tests/*.py src/*/*.py
 lint:
 	# code linting 
-	pylint --disable=R,C src/*.py test/*.py
+	pylint --disable=R,C src/*.py tests/*.py
 test:
 	python -m pytest -vv --cov=src tests/*.py
 build:
