@@ -3,6 +3,9 @@ from typing import Optional, List
 from datetime import date
 
 
+class OutOfStock(Exception):
+    pass
+
 @dataclass(frozen=True)
 class OrderLine:
     orderid: str
@@ -20,11 +23,12 @@ class Batch:
         self._allocations = set() # type: Set[OrderLine]
 
     def __gt__(self, other):
-        if self.eta is None:
-            return False
-        if other.eta is None:
-            return True
-        return self.eta > other.eta
+        if isinstance (other, Batch):
+            if self.eta is None:
+                return False
+            if other.eta is None:
+                return True
+            return self.eta > other.eta
     
     def __eq__(self, other):
         if not isinstance(other, Batch):
@@ -56,8 +60,12 @@ class Batch:
         return self.sku == line.sku and self.available_quantity >= line.qty
 
 def allocate(line: OrderLine, batches: List[Batch]) -> str:
-    batch = next(
-        b for b in sorted(batches) if b.can_allocate(line)
-    )
-    batch.allocate(line)
-    return batch.reference
+    try:
+        batch = next(
+            b for b in sorted(batches) if b.can_allocate(line)
+        )
+        batch.allocate(line)
+        return batch.reference
+    except StopIteration:
+        raise OutOfStock(f'Out of stock for sku {line.sku}')
+

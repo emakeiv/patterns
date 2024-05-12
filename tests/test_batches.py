@@ -47,4 +47,23 @@ def test_prefers_current_stock_batches_to_shipment():
     assert shipment_batch.available_quantity == 100 
 
 def test_prefers_earlier_batches():
-    pytest.fail("TODO")
+    earliest_batch = Batch("speedy-batch", "MINIMAL-SPOON", 100, eta=today)
+    later_batch    = Batch("normal-batch", "MINIMAL-SPOON", 100, eta=tomorrow)
+    latest_batch   = Batch("slow-batch", "MINIMAL-SPOON", 100, eta=later)
+
+    line = OrderLine("order-001", "MINIMAL-SPOON", 10)
+
+    allocate(line, [earliest_batch, later_batch, latest_batch])
+
+    assert earliest_batch.available_quantity == 90
+    assert later_batch.available_quantity == 100
+    assert latest_batch.available_quantity == 100
+
+def test_returns_allocated_batch_ref():
+    in_stock_batch = Batch("in-stock-batch-ref", "HIGH-POSTER", 100, eta=None)
+    shipment_batch = Batch("shipment-batch-ref", "HIGH-POSTER", 100, eta=tomorrow)
+    line = OrderLine("order-001", "HIGH-POSTER", 10 )
+
+    allocation = allocate(line, [in_stock_batch, shipment_batch])
+
+    assert allocation == in_stock_batch.reference
